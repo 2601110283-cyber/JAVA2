@@ -1,0 +1,29 @@
+package ai1027;
+
+import center.SetFrame;
+
+import javax.swing.*;
+
+
+public class NullLayoutTest extends JFrame{
+    public NullLayoutTest(){
+        setLayout(null);
+
+        int[] pointsX = {50, 80, 110};
+        int[] pointsY = {50, 80, 110};
+
+        int btnw = 70, btnH = 60;
+
+        for (int i = 0; i < pointsX.length; i++) {
+            JButton btn = new JButton("버튼" + (i+1));
+            btn.setBounds(pointsX[i], pointsY[i], btnw, btnH);
+            add(btn);
+        }
+        SetFrame.setFrame(this,"레이아웃없는 컴포넌트", 250, 250);
+
+    }
+
+    static void main(String[] args) {
+        new NullLayoutTest();
+    }
+}
