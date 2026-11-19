@@ -4,6 +4,7 @@ import Book_management.domain.Book;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.util.ArrayList;
 
@@ -14,13 +15,12 @@ public class BookSearchPan extends JPanel {
     JComboBox<String> combo = new JComboBox<String>(comboStr);
     JTable table;
     DefaultTableModel model;
-    // ★ 수정: putSearchResult()의 열 순서(0~6번)와 정확히 일치하도록 헤더 순서 정렬
-    // 1. 표 상단 제목 순서를 DB 테이블 컬럼 순서와 동일하게 설정
-    String[] tableHeader = {"도서번호", "도서명", "저자명", "도서가격", "재고량", "카테고리", "출판사"};
+    // 사진과 같은 열 순서
+    String[] tableHeader = {"도서번호", "도서명", "저자명", "출판사", "가격", "재고량", "카테고리"};
     ArrayList<Book> bookList;
     String searchWard;
 
-    public BookSearchPan(){
+    public BookSearchPan() {
         setLayout(new BorderLayout());
 
         JPanel panN = new JPanel();
@@ -33,33 +33,40 @@ public class BookSearchPan extends JPanel {
         add("North", panN);
     }
 
-    public void initView(){
-        model = new DefaultTableModel(tableHeader, bookList.size()){
+    public void initView() {
+        model = new DefaultTableModel(tableHeader, bookList.size()) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
         table = new JTable(model);
+        TableColumnModel tcm = table.getColumnModel();
+
+        tcm.getColumn(0).setPreferredWidth(50);   // 도서번호
+        tcm.getColumn(1).setPreferredWidth(200);  // 도서명
+        tcm.getColumn(2).setPreferredWidth(130);  // 저자명
+        tcm.getColumn(3).setPreferredWidth(100);  // 출판사
+        tcm.getColumn(4).setPreferredWidth(50);   // 가격
+        tcm.getColumn(5).setPreferredWidth(50);   // 재고량
+        tcm.getColumn(6).setPreferredWidth(80);   // 카테고리
 
         JScrollPane scroll = new JScrollPane(table);
-
         add("Center", scroll);
     }
 
-    // 2. 각 열(0~6번)에 들어가는 데이터 순서도 제목과 똑같이 변경
     public void putSearchResult() {
         model.setRowCount(bookList.size());
-        Book book = null;
+        Book book;
         for (int i = 0; i < bookList.size(); i++) {
             book = bookList.get(i);
-            model.setValueAt(book.getIsbn(), i, 0);          // 0: 도서번호
-            model.setValueAt(book.getName(), i, 1);          // 1: 도서명
-            model.setValueAt(book.getAuthor(), i, 2);        // 2: 저자명
-            model.setValueAt(book.getPrice(), i, 3);         // 3: 도서가격
-            model.setValueAt(book.getInventory(), i, 4);     // 4: 재고량
-            model.setValueAt(book.getCategory_name(), i, 5); // 5: 카테고리
-            model.setValueAt(book.getPublish_name(), i, 6);  // 6: 출판사
+            model.setValueAt(book.getIsbn(), i, 0);          // 도서번호
+            model.setValueAt(book.getName(), i, 1);          // 도서명
+            model.setValueAt(book.getAuthor(), i, 2);        // 저자명
+            model.setValueAt(book.getPublish_name(), i, 3);  // 출판사
+            model.setValueAt(book.getPrice(), i, 4);         // 가격
+            model.setValueAt(book.getInventory(), i, 5);     // 재고량
+            model.setValueAt(book.getCategory_name(), i, 6); // 카테고리
         }
     }
 
@@ -75,8 +82,12 @@ public class BookSearchPan extends JPanel {
         return btnSearch;
     }
 
+    public JTextField getFieldSearch() {
+        return fieldSearch;
+    }
+
     public String getSearchWard() {
-        searchWard = fieldSearch.getText();
+        searchWard = fieldSearch.getText().trim();
         return searchWard;
     }
 }

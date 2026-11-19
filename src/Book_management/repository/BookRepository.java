@@ -11,25 +11,26 @@ import java.util.ArrayList;
 public class BookRepository {
     ArrayList<Book> bookList;
 
-    public ArrayList<Book> select(String searchWord, int selectedIndex){
-        // ★ 오류 해결: 리스트 객체 생성(초기화) 추가
+    // selectedIndex: 0=도서명, 1=출판사명, 2=저자명 (콤보박스 순서와 동일)
+    public ArrayList<Book> select(String searchWord, int selectedIndex) {
         bookList = new ArrayList<Book>();
 
         Connection con = JDBCConnector.getConnection();
-        String[] columnName = {"name", "publish_name", "author"};
+        String[] columnName = {"b.name", "p.publish_name", "b.author"};
         PreparedStatement pstmt = null;
         ResultSet rs = null;
 
-        String sql = "select isbn, name, author, price, inventory, category_name, publish_name from book b, category c, publish p " +
+        String sql = "select b.isbn, b.name, b.author, b.price, b.inventory, c.category_name, p.publish_name " +
+                "from book b, category c, publish p " +
                 "where b.category_id = c.category_id and b.publish_id = p.publish_id " +
-                "and " + columnName[selectedIndex] + " like ?";
+                "and " + columnName[selectedIndex] + " like ? " +
+                "order by b.isbn";
         try {
             pstmt = con.prepareStatement(sql);
-            // 검색어가 포함된 모든 데이터를 찾도록 앞뒤로 % 추가
             pstmt.setString(1, "%" + searchWord + "%");
             rs = pstmt.executeQuery();
-            Book book = null;
-            while (rs.next()){
+            Book book;
+            while (rs.next()) {
                 book = new Book();
                 book.setIsbn(rs.getString("isbn"));
                 book.setName(rs.getString("name"));
@@ -40,18 +41,80 @@ public class BookRepository {
                 book.setPublish_name(rs.getString("publish_name"));
                 bookList.add(book);
             }
-
         } catch (SQLException e) {
             throw new RuntimeException(e);
         } finally {
             try {
-                if (pstmt != null) pstmt.close();
+                // 연 순서의 반대로 닫기: ResultSet → Statement → Connection
                 if (rs != null) rs.close();
+                if (pstmt != null) pstmt.close();
                 if (con != null) con.close();
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         }
         return bookList;
+    }
+
+    public void insert(Book book) {
+        Connection con = JDBCConnector.getConnection();
+        PreparedStatement pstmt = null;
+        String sql = "insert into book values(?, ?, ?, ?, ?, ?, ?)";
+
+        // 출판사명을 ID 정수 값으로 변경
+        int publish_id = 0;
+        switch (book.getPublish_name()) {
+            case "한빛아카데미":
+                publish_id = 1;
+                break;
+            case "생능출판사":
+                publish_id = 2;
+                break;
+            case "민음사":
+                publish_id = 3;
+                break;
+            case "해냄출판사":
+                publish_id = 4;
+                break;
+        }
+
+        // 카테고리명을 ID 정수 값으로 변경
+        int category_id = 0;
+        switch (book.getCategory_name()) {
+            case "IT도서":
+                category_id = 10;
+                break;
+            case "소설":
+                category_id = 20;
+                break;
+            case "수필":
+                category_id = 30;
+                break;
+            case "시":
+                category_id = 40;
+                break;
+        }
+
+        try {
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, book.getIsbn());
+            pstmt.setString(2, book.getName());
+            pstmt.setString(3, book.getAuthor());
+            pstmt.setInt(4, book.getPrice());
+            pstmt.setInt(5, book.getInventory());
+            pstmt.setInt(6, category_id);
+            pstmt.setInt(7, publish_id);
+
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        } finally {
+            try {
+                if (pstmt != null) pstmt.close();
+                if (con != null) con.close();
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 }
